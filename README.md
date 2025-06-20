@@ -35,6 +35,6 @@ You may not:
 - Redistribute altered versions
 - Use it commercially
 
-Full license text: [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/)
-
 © 2025 Skylandeer and SpyroStudios. All rights reserved.
+
+[![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC_BY--NC--ND_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-nd/4.0/)
