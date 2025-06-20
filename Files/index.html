@@ -1,324 +1,597 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Skylanders Sheet Updater</title>
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600&display=swap" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <style>
-      * { box-sizing: border-box; }
-      html, body {
-        margin: 0; padding: 0;
-        font-family: 'Lexend', sans-serif;
-        height: 100%;
-        background: linear-gradient(-45deg, #73ff53, #6c5ce7, #8e44ad);
-        background-size: 600% 600%;
-        animation: gradientShift 12s ease infinite;
-        overflow: hidden;
-      }
-      .screen {
-        position: absolute; top: 0; left: 0;
-        width: 100%; height: 100%;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        animation: fadeIn 1s ease forwards;
-      }
-      .active { display: flex; }
-      .container, .processing-screen, .success-screen {
-        position: relative;
-        background: white;
-        padding: 40px;
-        border-radius: 25px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        max-width: 800px;
-        width: 90%;
-        text-align: center;
-        animation: fadeInUp 0.8s ease forwards;
-        overflow: visible;
-        z-index: 10;
-      }
-      h1 {
-        font-size: 2.5rem;
-        color: #6c5ce7;
-        margin: 0 0 10px;
-      }
-      h2 {
-        font-weight: 400;
-        font-size: 1.25rem;
-        color: #444;
-        margin-bottom: 20px;
-      }
-      button {
-        background-color: #6c5ce7;
-        color: white;
-        border: none;
-        padding: 12px 25px;
-        font-size: 1.1rem;
-        border-radius: 30px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        margin: 10px;
-      }
-      button:hover {
-        transform: scale(1.05);
-        background-color: #5a4bd6;
-      }
-      .note {
-        font-size: 0.95rem;
-        margin: 10px 0 20px;
-        color: #777;
-      }
-      #fileList {
-        list-style: none;
-        padding: 0;
-        max-height: 300px;
-        overflow-y: auto;
-        width: 100%;
-        margin-top: 10px;
-      }
-      .fileItem {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: #f7f7f7;
-        padding: 15px 20px;
-        margin-bottom: 12px;
-        border-radius: 15px;
-      }
-      .spinner {
-        border: 4px solid rgba(0, 0, 0, 0.1);
-        border-left-color: #6c5ce7;
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        animation: spin 1s linear infinite;
-        margin: 20px auto;
-      }
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-      @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(50px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-      @keyframes gradientShift {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-      }
-      .floating-buttons {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        z-index: 1000;
-      }
-      .floating-button {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        transition: transform 0.3s ease, filter 0.3s ease;
-        background-color: white;
-        padding: 5px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .floating-button:hover {
-        transform: scale(1.1);
-        filter: brightness(1.1);
-      }
-      #successButtons {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        margin-top: 20px;
-        flex-wrap: wrap;
-      }
-    </style>
-  </head>
-  <body>
-    <!-- Main Screen -->
-    <div class="screen active" id="mainScreen">
-      <div class="container">
-        <h1>The Ultimate Skylanders Collectors Sheet Updater!</h1>
-        <h2>Select a file to Update/Repair.</h2>
-        <button onclick="fetchDriveFiles()">Load Spreadsheets</button>
-        <div class="note">Use <strong>Ctrl + F</strong> to find your sheet quickly!</div>
-        <ul id="fileList"></ul>
-      </div>
-    </div>
-
-    <!-- Validation Screen -->
-    <div class="screen" id="validationScreen">
-      <div class="processing-screen">
-        <h1>Validating...</h1>
-        <div class="spinner"></div>
-        <p>We’re checking if your spreadsheet has all the required sheets.</p>
-      </div>
-    </div>
-
-    <!-- Processing Screen -->
-    <div class="screen" id="processingScreen">
-      <div class="processing-screen">
-        <h1>Processing...</h1>
-        <div class="spinner"></div>
-        <p>Hang tight. We’re generating your new sheet!</p>
-      </div>
-    </div>
-
-    <!-- Success Screen -->
-    <div class="screen" id="successScreen">
-      <div class="success-screen">
-        <h1>Success!</h1>
-        <p>Your new sheet has been created.</p>
-        <p><small>The Ultimate Collectors Spreadsheet Updater was created by @SpyroStudios for The Ultimate Skylanders Spreadsheet.</small></p>
-        <div id="successButtons"></div>
-      </div>
-    </div>
-    
-    <!-- Invalid Sheet Screen -->
-<div class="screen" id="invalidScreen">
-  <div class="processing-screen">
-    <h1>Uh Oh!</h1>
-    <p>The sheet you selected is invalid.</p>
-    <p>Make sure the sheet is a version of Skylandeer and SpyroStudios' Ultimate Skylanders Collectors Sheet!</p>
-    <p><small> If there is a problem, please feel free to ask.</small></p>
-    <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
-      <button onclick="switchScreen('invalidScreen', 'mainScreen')">Go Back</button>
-      <a href="https://discord.gg/2KpFjHXfz9" target="_blank">
-        <button>Ask on Discord</button>
-      </a>
-    </div>
-  </div>
-</div>
-
-    <!-- Floating Buttons -->
-    <div class="floating-buttons">
-      <a href="https://discord.gg/2KpFjHXfz9" target="_blank" class="floating-button" aria-label="Discord">
-        <svg xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" image-rendering="optimizeQuality" fill-rule="evenodd" clip-rule="evenodd" viewBox="0 0 512 512" width="100%" height="100%">
-          <path fill="#5865F2" d="M256 0c141.385 0 256 114.615 256 256S397.385 512 256 512 0 397.385 0 256 114.615 0 256 0z"/>
-          <path fill="#fff" fill-rule="nonzero" d="M360.932 160.621a250.49 250.49 0 00-62.384-19.182 174.005 174.005 0 00-7.966 16.243 232.677 232.677 0 00-34.618-2.602c-11.569 0-23.196.879-34.623 2.58-2.334-5.509-5.044-10.972-7.986-16.223a252.55 252.55 0 00-62.397 19.222c-39.483 58.408-50.183 115.357-44.833 171.497a251.546 251.546 0 0076.502 38.398c6.169-8.328 11.695-17.193 16.386-26.418a161.718 161.718 0 01-25.813-12.318c2.165-1.569 4.281-3.186 6.325-4.756 23.912 11.23 50.039 17.088 76.473 17.088 26.436 0 52.563-5.858 76.475-17.09 2.069 1.689 4.186 3.306 6.325 4.756a162.642 162.642 0 01-25.859 12.352 183.919 183.919 0 0016.386 26.396 250.495 250.495 0 0076.553-38.391l-.006.006c6.278-65.103-10.724-121.529-44.94-171.558zM205.779 297.63c-14.908 0-27.226-13.53-27.226-30.174 0-16.645 11.889-30.294 27.179-30.294 15.289 0 27.511 13.649 27.249 30.294-.261 16.644-12.007 30.174-27.202 30.174zm100.439 0c-14.933 0-27.202-13.53-27.202-30.174 0-16.645 11.889-30.294 27.202-30.294 15.313 0 27.44 13.649 27.178 30.294-.261 16.644-11.984 30.174-27.178 30.174z"/>
-        </svg>
-      </a>
-      <a href="https://www.youtube.com/@theSkylandeer" target="_blank">
-        <img src="https://lh3.googleusercontent.com/d/1JXd921Oct_LlhYfPSNSZNXSjafBuqWEK" alt="YouTube" class="floating-button" />
-      </a>
-    </div>
-
-    <script>
-      const requiredSheets = [
-        "Spyro's Adventure", "Giants", "Swap Force", "Trap Team", "Superchargers",
-        "Imaginators", "Eon's Elite", "Traps", "Vehicles", "Creation Crystals",
-        "Chase Variants", "Extras"
-      ];
-
-      function switchScreen(fromId, toId) {
-        document.getElementById(fromId).classList.remove("active");
-        document.getElementById(toId).classList.add("active");
-        if (toId === "mainScreen") {
-          resetProcessButtons();
-        }
-      }
-
-      function fetchDriveFiles() {
-        const fileList = document.getElementById("fileList");
-        fileList.innerHTML = "<div class='spinner'></div>";
-        google.script.run.withSuccessHandler(displayFiles).getDriveFiles();
-      }
-
-      function displayFiles(files) {
-        const fileList = document.getElementById("fileList");
-        fileList.innerHTML = "";
-        files.forEach(file => {
-          const li = document.createElement("li");
-          li.className = "fileItem";
-          li.innerHTML = `
-            <span>${file.name}</span>
-            <button onclick="validateFile('${file.id}', this)">Process</button>
-          `;
-          fileList.appendChild(li);
-        });
-      }
-
-      function validateFile(fileId, buttonEl) {
-        buttonEl.disabled = true;
-        buttonEl.innerText = "Validating...";
-        switchScreen("mainScreen", "validationScreen")
-        google.script.run.withSuccessHandler(validationResult => {
-          if (validationResult.isValid) {
-            switchScreen("validationScreen","processingScreen");
-              processFile(fileId);
-            } else {
-              switchScreen("validationScreen","invalidScreen");
-              const ul = document.getElementById("missingList");
-              ul.innerHTML = validationResult.missingSheets
-                .map(name => `<li>${name}</li>`)
-                .join("");
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Skylanders Sheet Updater</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600&display=swap"
+            rel="stylesheet"
+        />
+        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+        <style>
+            * {
+                box-sizing: border-box;
             }
-            buttonEl.disabled = false;
-            buttonEl.innerText = "Process";
-        })
-          .withFailureHandler(error => {
-            alert("Error: " + error.message);
-            buttonEl.disabled = false;
-            buttonEl.innerText = "Process";
-          })
-            .validateSpreadsheet(fileId, requiredSheets);
-          }
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: "Lexend", sans-serif;
+                height: 100%;
+                background: linear-gradient(-45deg, #73ff53, #6c5ce7, #8e44ad);
+                background-size: 600% 600%;
+                animation: gradientShift 12s ease infinite;
+                overflow: hidden;
+            }
+            .screen {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+                animation: fadeIn 1s ease forwards;
+            }
+            .active {
+                display: flex;
+            }
+            .container,
+            .processing-screen,
+            .success-screen {
+                position: relative;
+                background: white;
+                padding: 40px;
+                border-radius: 25px;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+                max-width: 800px;
+                width: 90%;
+                text-align: center;
+                animation: fadeInUp 0.8s ease forwards;
+                overflow: visible;
+                z-index: 10;
+            }
+            h1 {
+                font-size: 2.5rem;
+                color: #6c5ce7;
+                margin: 0 0 10px;
+            }
+            h2 {
+                font-weight: 400;
+                font-size: 1.25rem;
+                color: #444;
+                margin-bottom: 20px;
+            }
+            button {
+                background-color: #6c5ce7;
+                color: white;
+                border: none;
+                padding: 12px 25px;
+                font-size: 1.1rem;
+                border-radius: 30px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                margin: 10px;
+            }
+            button:hover {
+                transform: scale(1.05);
+                background-color: #5a4bd6;
+            }
+            .note {
+                font-size: 0.95rem;
+                margin: 10px 0 20px;
+                color: #777;
+            }
+            #fileList {
+                list-style: none;
+                padding: 0;
+                max-height: 300px;
+                overflow-y: auto;
+                width: 100%;
+                margin-top: 10px;
+            }
+            .fileItem {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: #f7f7f7;
+                padding: 15px 20px;
+                margin-bottom: 12px;
+                border-radius: 15px;
+            }
+            .spinner {
+                border: 4px solid rgba(0, 0, 0, 0.1);
+                border-left-color: #6c5ce7;
+                border-radius: 50%;
+                width: 50px;
+                height: 50px;
+                animation: spin 1s linear infinite;
+                margin: 20px auto;
+            }
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(50px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                }
+                to {
+                    opacity: 1;
+                }
+            }
+            @keyframes gradientShift {
+                0% {
+                    background-position: 0% 50%;
+                }
+                50% {
+                    background-position: 100% 50%;
+                }
+                100% {
+                    background-position: 0% 50%;
+                }
+            }
+            .floating-buttons {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+                z-index: 1000;
+            }
+            .floating-button {
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                overflow: hidden;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                transition: transform 0.3s ease, filter 0.3s ease;
+                background-color: white;
+                padding: 5px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .floating-button:hover {
+                transform: scale(1.1);
+                filter: brightness(1.1);
+            }
+            #successButtons {
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+                margin-top: 20px;
+                flex-wrap: wrap;
+            }
+            #licenseButton {
+                position: fixed;
+                bottom: 20px;
+                left: 20px;
+                background-color: white;
+                color: black;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 25px;
+                font-size: 0.85rem;
+                cursor: pointer;
+                box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+                transition: background-color 0.3s ease, color 0.3s ease,
+                    transform 0.3s ease;
+                z-index: 1000;
+                font-family: "Lexend", sans-serif;
+            }
 
-      function processFile(fileId) {
-        google.script.run
-          .withSuccessHandler(displaySuccess)
-          .withFailureHandler(error => {
-            alert("Error: " + error.message);
-            switchScreen("processingScreen", "mainScreen");
-          })
-          .copySpreadsheet(fileId);
-      }
+            #licenseButton:hover {
+                background-color: #f0f0f0;
+                transform: scale(1.05); /* Smoothly scale the button */
+            }
 
-      function displaySuccess(newUrl) {
-        switchScreen("processingScreen", "successScreen");
-        confetti({ particleCount: 250, spread: 100, origin: { y: 0.6 } });
+            /* License Modal */
+            #licenseModal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.7);
+                display: none;
+                align-items: center;
+                justify-content: center;
+                z-index: 2000;
+            }
+            #licenseModal.active {
+                display: flex;
+            }
+            #licenseModal .modal-content {
+                background: white;
+                max-width: 600px;
+                width: 90%;
+                border-radius: 15px;
+                padding: 25px 30px;
+                text-align: left;
+                max-height: 80vh;
+                overflow-y: auto;
+                position: relative;
+                font-size: 0.95rem;
+                color: #333;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            }
+            #licenseModal .modal-content h2 {
+                margin-top: 0;
+                color: #6c5ce7;
+                font-weight: 600;
+            }
+            #licenseModal .close-btn {
+                position: absolute;
+                top: 12px;
+                right: 15px;
+                background: transparent;
+                border: none;
+                font-size: 1.8rem;
+                cursor: pointer;
+                color: #666;
+                font-weight: 700;
+                line-height: 1;
+                transition: color 0.3s ease;
+            }
+            #licenseModal .close-btn:hover {
+                color: #6c5ce7;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Main Screen -->
+        <div class="screen active" id="mainScreen">
+            <div class="container">
+                <h1>The Ultimate Skylanders Collectors Sheet Updater!</h1>
+                <h2>Select a file to Update/Repair.</h2>
+                <button onclick="fetchDriveFiles()">Load Spreadsheets</button>
+                <div class="note">
+                    Use <strong>Ctrl + F</strong> to find your sheet quickly!
+                </div>
+                <ul id="fileList"></ul>
+            </div>
+        </div>
 
-        const btnContainer = document.getElementById("successButtons");
-        btnContainer.innerHTML = "";
+        <!-- Validation Screen -->
+        <div class="screen" id="validationScreen">
+            <div class="processing-screen">
+                <h1>Validating...</h1>
+                <div class="spinner"></div>
+                <p>
+                    We’re checking if your spreadsheet has all the required
+                    sheets.
+                </p>
+            </div>
+        </div>
 
-        const openBtn = document.createElement("button");
-        openBtn.innerText = "Open Sheet";
-        openBtn.onclick = () => window.open(newUrl, "_blank");
-        btnContainer.appendChild(openBtn);
+        <!-- Processing Screen -->
+        <div class="screen" id="processingScreen">
+            <div class="processing-screen">
+                <h1>Processing...</h1>
+                <div class="spinner"></div>
+                <p>Hang tight. We’re generating your new sheet!</p>
+            </div>
+        </div>
 
-        const copyBtn = document.createElement("button");
-        copyBtn.innerText = "Copy Link";
-        copyBtn.onclick = () => {
-          navigator.clipboard.writeText(newUrl);
-          alert("Link copied to clipboard!");
-        };
-        btnContainer.appendChild(copyBtn);
-      }
+        <!-- Success Screen -->
+        <div class="screen" id="successScreen">
+            <div class="success-screen">
+                <h1>Success!</h1>
+                <p>Your new sheet has been created.</p>
+                <p>
+                    <small
+                        >The Ultimate Collectors Spreadsheet Updater was created
+                        by @SpyroStudios for The Ultimate Skylanders
+                        Spreadsheet.</small
+                    >
+                </p>
+                <div id="successButtons"></div>
+            </div>
+        </div>
 
-      function resetProcessButtons() {
-        const fileList = document.getElementById("fileList");
-        const buttons = fileList.querySelectorAll("button");
-        buttons.forEach(btn => {
-          btn.disabled = false;
-          btn.innerText = "Process";
-        });
-      }
+        <!-- Invalid Sheet Screen -->
+        <div class="screen" id="invalidScreen">
+            <div class="processing-screen">
+                <h1>Uh Oh!</h1>
+                <p>The sheet you selected is invalid.</p>
+                <p>
+                    Make sure the sheet is a version of Skylandeer and
+                    SpyroStudios' Ultimate Skylanders Collectors Sheet!
+                </p>
+                <p>
+                    <small>
+                        If there is a problem, please feel free to ask.</small
+                    >
+                </p>
+                <div
+                    style="
+                        display: flex;
+                        justify-content: center;
+                        gap: 20px;
+                        margin-top: 20px;
+                        flex-wrap: wrap;
+                    "
+                >
+                    <button
+                        onclick="switchScreen('invalidScreen', 'mainScreen')"
+                    >
+                        Go Back
+                    </button>
+                    <a href="https://discord.gg/2KpFjHXfz9" target="_blank">
+                        <button>Ask on Discord</button>
+                    </a>
+                </div>
+            </div>
+        </div>
 
-    </script>
-  </body>
+        <!-- License Modal -->
+        <div
+            id="licenseModal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="licenseTitle"
+        >
+            <div class="modal-content">
+                <button class="close-btn" aria-label="Close license details">
+                    &times;
+                </button>
+                <h2 id="licenseTitle">Creative Commons License Details</h2>
+                <p>
+                    <strong
+                        >Ultimate Skylanders Collectors Sheet Updater</strong
+                    >
+                    by @SpyroStudios & @Skylandeer.<br /><br />
+                    This work is licensed under the Creative Commons
+                    Attribution-NonCommercial-NoDerivatives 4.0 International
+                    License.
+                </p>
+                <pre
+                    style="
+                        white-space: pre-wrap;
+                        font-family: monospace;
+                        background: #f0f0f0;
+                        padding: 15px;
+                        border-radius: 8px;
+                        max-height: 50vh;
+                        overflow-y: auto;
+                    "
+                >
+© 2025 Skylandeer & SpyroStudios
+
+Permission is hereby granted to any person obtaining a copy
+of this work to share, copy, and redistribute the material in any medium or format,
+under the following conditions:
+
+Attribution — You must give appropriate credit, provide a link to the license,
+and indicate if changes were made.
+
+NonCommercial — You may not use the material for commercial purposes.
+
+NoDerivatives — If you remix, transform, or build upon the material,
+you may not distribute the modified material.
+
+This work is licensed under the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License.
+
+THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS IN THE WORK.
+
+For the full license text, see: 
+<a href="https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode" target="_blank" rel="noopener noreferrer">
+https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode
+</a>
+    </pre>
+            </div>
+        </div>
+
+        <!-- Floating Buttons -->
+        <div class="floating-buttons">
+            <!-- GitHub Button -->
+            <a
+                href="https://github.com/SpyroStudios/Ultimate-Collection-Sheet-Updater/tree/main"
+                target="_blank"
+                class="floating-button"
+                aria-label="GitHub Repository"
+                title="GitHub Repository"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 496 512"
+                    height="100%"
+                    width="100%"
+                    fill="#333"
+                >
+                    <title>GitHub</title>
+                    <path
+                        d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3 .3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5 .3-6.2 2.3zm44.2-1.7c-2.9 .7-4.9 2.6-4.6 4.9 .3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3 .7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3 .3 2.9 2.3 3.9 1.6 1 3.6 .7 4.3-.7 .7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3 .7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3 .7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"
+                    />
+                </svg>
+            </a>
+
+            <a
+                href="https://discord.gg/2KpFjHXfz9"
+                target="_blank"
+                class="floating-button"
+                aria-label="Discord"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    shape-rendering="geometricPrecision"
+                    text-rendering="geometricPrecision"
+                    image-rendering="optimizeQuality"
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    viewBox="0 0 512 512"
+                    width="100%"
+                    height="100%"
+                >
+                    <path
+                        fill="#5865F2"
+                        d="M256 0c141.385 0 256 114.615 256 256S397.385 512 256 512 0 397.385 0 256 114.615 0 256 0z"
+                    />
+                    <path
+                        fill="#fff"
+                        fill-rule="nonzero"
+                        d="M360.932 160.621a250.49 250.49 0 00-62.384-19.182 174.005 174.005 0 00-7.966 16.243 232.677 232.677 0 00-34.618-2.602c-11.569 0-23.196.879-34.623 2.58-2.334-5.509-5.044-10.972-7.986-16.223a252.55 252.55 0 00-62.397 19.222c-39.483 58.408-50.183 115.357-44.833 171.497a251.546 251.546 0 0076.502 38.398c6.169-8.328 11.695-17.193 16.386-26.418a161.718 161.718 0 01-25.813-12.318c2.165-1.569 4.281-3.186 6.325-4.756 23.912 11.23 50.039 17.088 76.473 17.088 26.436 0 52.563-5.858 76.475-17.09 2.069 1.689 4.186 3.306 6.325 4.756a162.642 162.642 0 01-25.859 12.352 183.919 183.919 0 0016.386 26.396 250.495 250.495 0 0076.553-38.391l-.006.006c6.278-65.103-10.724-121.529-44.94-171.558zM205.779 297.63c-14.908 0-27.226-13.53-27.226-30.174 0-16.645 11.889-30.294 27.179-30.294 15.289 0 27.511 13.649 27.249 30.294-.261 16.644-12.007 30.174-27.202 30.174zm100.439 0c-14.933 0-27.202-13.53-27.202-30.174 0-16.645 11.889-30.294 27.202-30.294 15.313 0 27.44 13.649 27.178 30.294-.261 16.644-11.984 30.174-27.178 30.174z"
+                    />
+                </svg>
+            </a>
+            <a href="https://www.youtube.com/@theSkylandeer" target="_blank">
+                <img
+                    src="https://lh3.googleusercontent.com/d/1JXd921Oct_LlhYfPSNSZNXSjafBuqWEK"
+                    alt="YouTube"
+                    class="floating-button"
+                />
+            </a>
+        </div>
+
+        <button id="licenseButton" title="Click to view license details">
+            © 2025 Skylandeer & SpyroStudios | Licensed CC BY-NC-ND 4.0
+        </button>
+
+        <script>
+            const requiredSheets = [
+              "Spyro's Adventure", "Giants", "Swap Force", "Trap Team", "Superchargers",
+              "Imaginators", "Eon's Elite", "Traps", "Vehicles", "Creation Crystals",
+              "Chase Variants", "Extras"
+            ];
+
+            function switchScreen(fromId, toId) {
+              document.getElementById(fromId).classList.remove("active");
+              document.getElementById(toId).classList.add("active");
+              if (toId === "mainScreen") {
+                resetProcessButtons();
+              }
+            }
+            const licenseModal = document.getElementById("licenseModal");
+            const licenseButton = document.getElementById("licenseButton");
+            licenseButton.addEventListener("click", () => {
+              licenseModal.classList.add("active");
+            });
+            const closeBtn = licenseModal.querySelector(".close-btn");
+
+            licenseButton.addEventListener("click", () => {
+              licenseModal.classList.add("active");
+            });
+
+            closeBtn.addEventListener("click", () => {
+              licenseModal.classList.remove("active");
+            });
+
+            // Close modal on click outside content
+            licenseModal.addEventListener("click", (e) => {
+              if (e.target === licenseModal) {
+                licenseModal.classList.remove("active");
+              }
+            });
+
+            function fetchDriveFiles() {
+              const fileList = document.getElementById("fileList");
+              fileList.innerHTML = "<div class='spinner'></div>";
+              google.script.run.withSuccessHandler(displayFiles).getDriveFiles();
+            }
+
+            function displayFiles(files) {
+              const fileList = document.getElementById("fileList");
+              fileList.innerHTML = "";
+              files.forEach(file => {
+                const li = document.createElement("li");
+                li.className = "fileItem";
+                li.innerHTML = `
+                  <span>${file.name}</span>
+                  <button onclick="validateFile('${file.id}', this)">Process</button>
+                `;
+                fileList.appendChild(li);
+              });
+            }
+
+            function validateFile(fileId, buttonEl) {
+              buttonEl.disabled = true;
+              buttonEl.innerText = "Validating...";
+              switchScreen("mainScreen", "validationScreen")
+              google.script.run.withSuccessHandler(validationResult => {
+                if (validationResult.isValid) {
+                  switchScreen("validationScreen","processingScreen");
+                    processFile(fileId);
+                  } else {
+                    switchScreen("validationScreen","invalidScreen");
+                    const ul = document.getElementById("missingList");
+                    ul.innerHTML = validationResult.missingSheets
+                      .map(name => `<li>${name}</li>`)
+                      .join("");
+                  }
+                  buttonEl.disabled = false;
+                  buttonEl.innerText = "Process";
+              })
+                .withFailureHandler(error => {
+                  alert("Error: " + error.message);
+                  buttonEl.disabled = false;
+                  buttonEl.innerText = "Process";
+                })
+                  .validateSpreadsheet(fileId, requiredSheets);
+                }
+
+            function processFile(fileId) {
+              google.script.run
+                .withSuccessHandler(displaySuccess)
+                .withFailureHandler(error => {
+                  alert("Error: " + error.message);
+                  switchScreen("processingScreen", "mainScreen");
+                })
+                .copySpreadsheet(fileId);
+            }
+
+            function displaySuccess(newUrl) {
+              switchScreen("processingScreen", "successScreen");
+              confetti({ particleCount: 250, spread: 100, origin: { y: 0.6 } });
+
+              const btnContainer = document.getElementById("successButtons");
+              btnContainer.innerHTML = "";
+
+              const openBtn = document.createElement("button");
+              openBtn.innerText = "Open Sheet";
+              openBtn.onclick = () => window.open(newUrl, "_blank");
+              btnContainer.appendChild(openBtn);
+
+              const copyBtn = document.createElement("button");
+              copyBtn.innerText = "Copy Link";
+              copyBtn.onclick = () => {
+                navigator.clipboard.writeText(newUrl);
+                alert("Link copied to clipboard!");
+              };
+              btnContainer.appendChild(copyBtn);
+            }
+
+            function resetProcessButtons() {
+              const fileList = document.getElementById("fileList");
+              const buttons = fileList.querySelectorAll("button");
+              buttons.forEach(btn => {
+                btn.disabled = false;
+                btn.innerText = "Process";
+              });
+            }
+        </script>
+    </body>
 </html>
