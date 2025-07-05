@@ -29,7 +29,19 @@ function copySpreadsheet(sheetID) {
     const sourceSpreadsheetId = sheetID;
 
     const file = DriveApp.getFileById(templateFileId);
-    const newFile = file.makeCopy("The Ultimate Skylanders Collectors Sheet v1.0.0 (Processed at " + new Date().toLocaleString() + ")");
+    const newFile = file.makeCopy("The Ultimate Skylanders Collectors Sheet v1.0.1 (Processed at " + new Date().toLocaleString() + ")");
+
+    const editors = newFile.getEditors();
+    const viewers = newFile.getViewers();
+
+    editors.forEach(function(user) {
+      newFile.removeEditor(user);
+    });
+
+    viewers.forEach(function(user) {
+      newFile.removeViewer(user);
+    });
+
     const newSpreadsheet = SpreadsheetApp.openById(newFile.getId());
     const sourceSpreadsheet = SpreadsheetApp.openById(sourceSpreadsheetId);
 
