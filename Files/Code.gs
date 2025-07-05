@@ -25,11 +25,11 @@ function getDriveFiles() {
 
 function copySpreadsheet(sheetID) {
   try {
-    const templateFileId = '17y7-4SXasf5KaddW7-pBrobtZZLfdNX9-F8rztFxMI4'; // V 1.0.0
+    const templateFileId = '17y7-4SXasf5KaddW7-pBrobtZZLfdNX9-F8rztFxMI4'; // V 1.1.1
     const sourceSpreadsheetId = sheetID;
 
     const file = DriveApp.getFileById(templateFileId);
-    const newFile = file.makeCopy("The Ultimate Skylanders Collectors Sheet v1.0.1 (Processed at " + new Date().toLocaleString() + ")");
+    const newFile = file.makeCopy("The Ultimate Skylanders Collectors Sheet v1.1.1 (Processed at " + new Date().toLocaleString() + ")");
 
     const editors = newFile.getEditors();
     const viewers = newFile.getViewers();
