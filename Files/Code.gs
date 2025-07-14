@@ -1,10 +1,12 @@
 /**
- * @OnlyCurrentDoc
  * Required scopes:
  * https://www.googleapis.com/auth/drive.readonly
  * or 
  * https://www.googleapis.com/auth/drive
+ * or
+ * https://www.googleapis.com/auth/spreadsheets
  */
+
 
 function doGet() {
   return HtmlService.createHtmlOutputFromFile('index');
@@ -25,11 +27,18 @@ function getDriveFiles() {
 
 function copySpreadsheet(sheetID) {
   try {
-    const templateFileId = '17y7-4SXasf5KaddW7-pBrobtZZLfdNX9-F8rztFxMI4'; // V 1.0.0
+    const templateFileId = '17y7-4SXasf5KaddW7-pBrobtZZLfdNX9-F8rztFxMI4'; //v1.1.4
     const sourceSpreadsheetId = sheetID;
 
     const file = DriveApp.getFileById(templateFileId);
-    const newFile = file.makeCopy("The Ultimate Skylanders Collectors Sheet v1.0.0 (Processed at " + new Date().toLocaleString() + ")");
+    const newFile = file.makeCopy("The Ultimate Skylanders Collectors Sheet v1.1.4 (Updated on " + new Date().toLocaleDateString() + ")");
+
+    const editors = newFile.getEditors();
+    const viewers = newFile.getViewers();
+
+    editors.forEach(user => newFile.removeEditor(user));
+    viewers.forEach(user => newFile.removeViewer(user));
+
     const newSpreadsheet = SpreadsheetApp.openById(newFile.getId());
     const sourceSpreadsheet = SpreadsheetApp.openById(sourceSpreadsheetId);
 
@@ -49,8 +58,8 @@ function copySpreadsheet(sheetID) {
     };
 
     const swapForceValidJRowRanges = [
-      [4, 5], [11, 12], [18, 19], [25, 26], [32, 33], [39, 40], [46, 47],
-      [53, 54], [60, 61], [65, 66], [69, 71], [73, 74]
+      [4, 5], [11, 12], [18, 19], [25, 26], [32, 33], [39, 40],
+      [46, 47], [53, 54], [60, 61], [65, 66], [69, 71], [73, 74]
     ];
 
     const isInSwapForceSpecialRange = (row) =>
@@ -69,7 +78,7 @@ function copySpreadsheet(sheetID) {
       const targetSheet = newSpreadsheet.getSheetByName(sheetName);
 
       if (!sourceSheet || !targetSheet) {
-        Logger.log(`Skipping sheet (not found in source or target): ${sheetName}`);
+        Logger.log(`Skipping sheet (not found): ${sheetName}`);
         continue;
       }
 
@@ -77,6 +86,11 @@ function copySpreadsheet(sheetID) {
       Logger.log(`Processing sheet: ${sheetName}`);
 
       let numRows = sourceSheet.getLastRow();
+      const maxCols = Math.min(sourceSheet.getMaxColumns(), targetSheet.getMaxColumns());
+
+      const checkboxCol1 = (sheetName === "Imaginators") ? 13 : 12;
+      const checkboxCol2 = (sheetName === "Imaginators") ? 14 : 13;
+      const hasCheckboxCols = maxCols >= checkboxCol2;
 
       if (sheetName === "Traps" || sheetName === "Vehicles") {
         numRows = Math.max(2, numRows - 2);
@@ -86,63 +100,69 @@ function copySpreadsheet(sheetID) {
         try {
           if (sheetName === "Extras") {
             let rowValues = sourceSheet.getRange(i, 4, 1, 2).getValues()[0];
-            if (i >= 4) {
-              rowValues = rowValues.map(val => (val === true || val === false) ? val : '');
-            }
+            rowValues = rowValues.map(val => typeof val === 'boolean' ? val : '');
             targetSheet.getRange(i, 4, 1, rowValues.length).setValues([rowValues]);
-          } else {
-            let rowValues = columns.map(colIndex => sourceSheet.getRange(i, colIndex + 1).getValue());
-
-            if (i >= 4) {
-              rowValues = rowValues.map(val => (val === true || val === false) ? val : '');
-            }
-
-            // Determine the correct duplicate column (J for most, K for Imaginators)
-            const duplicateCol = (sheetName === "Imaginators") ? 11 : 10;
-            const rawVal = sourceSheet.getRange(i, duplicateCol).getValue();
-            let duplicateVal = '';
-
-            if (sheetName === "Swap Force") {
-              if (
-                isInSwapForceSpecialRange(i) && isPositiveIntegerOrHalf(rawVal)
-              ) {
-                duplicateVal = rawVal;
-              } else if (!isInSwapForceSpecialRange(i) && isPositiveInteger(rawVal)) {
-                duplicateVal = rawVal;
-              }
-            } else if (sheetName === "Imaginators" && isPositiveInteger(rawVal)) {
-              duplicateVal = rawVal;
-            } else if (sheetName !== "Extras" && isPositiveInteger(rawVal)) {
-              duplicateVal = rawVal;
-            }
-
-            targetSheet.getRange(i, columns[0] + 1, 1, rowValues.length).setValues([rowValues]);
-            targetSheet.getRange(i, duplicateCol, 1, 1).setValue(duplicateVal);
+            continue;
           }
+
+          let rowValues = columns.map(colIndex =>
+            sourceSheet.getRange(i, colIndex + 1).getValue()
+          ).map(val => typeof val === 'boolean' ? val : '');
+
+          const duplicateCol = (sheetName === "Imaginators") ? 11 : 10;
+          let duplicateVal = '';
+          const rawVal = sourceSheet.getRange(i, duplicateCol).getValue();
+
+          if (sheetName === "Swap Force") {
+            if (
+              (isInSwapForceSpecialRange(i) && isPositiveIntegerOrHalf(rawVal)) ||
+              (!isInSwapForceSpecialRange(i) && isPositiveInteger(rawVal))
+            ) {
+              duplicateVal = rawVal;
+            }
+          } else if (
+            (sheetName === "Imaginators" && isPositiveInteger(rawVal)) ||
+            (sheetName !== "Extras" && isPositiveInteger(rawVal))
+          ) {
+            duplicateVal = rawVal;
+          }
+
+          targetSheet.getRange(i, columns[0] + 1, 1, rowValues.length).setValues([rowValues]);
+          targetSheet.getRange(i, duplicateCol, 1, 1).setValue(duplicateVal);
+
+          if (hasCheckboxCols) {
+            let checkbox1 = sourceSheet.getRange(i, checkboxCol1).getValue();
+            let checkbox2 = sourceSheet.getRange(i, checkboxCol2).getValue();
+
+            checkbox1 = (checkbox1 === true || checkbox1 === false) ? checkbox1 : '';
+            checkbox2 = (checkbox2 === true || checkbox2 === false) ? checkbox2 : '';
+
+            targetSheet.getRange(i, checkboxCol1, 1, 1).setValue(checkbox1);
+            targetSheet.getRange(i, checkboxCol2, 1, 1).setValue(checkbox2);
+          }
+
         } catch (rowError) {
-          Logger.log(`Error processing row ${i} in sheet "${sheetName}": ${rowError.message}`);
+          Logger.log(`Error processing row ${i} in "${sheetName}": ${rowError.message}`);
         }
       }
 
-      Logger.log(`Data updated in target sheet: ${sheetName}`);
+      Logger.log(`Finished processing: ${sheetName}`);
     }
 
-    // Handle "Completion" sheet
     try {
       const sourceSheet = sourceSpreadsheet.getSheetByName("Completion");
       const targetSheet = newSpreadsheet.getSheetByName("Completion");
 
-      if (!sourceSheet || !targetSheet) {
-        Logger.log("Skipping 'Completion' sheet (not found in source or target)");
-      } else {
+      if (sourceSheet && targetSheet) {
         const sourceValues = sourceSheet.getRange("A8:A12").getValues();
         const processedValues = sourceValues.map(([val]) => [val === true]);
-
         targetSheet.getRange("A8:A12").setValues(processedValues);
-        Logger.log("Completion sheet updated.");
+        Logger.log("Completion sheet copied.");
+      } else {
+        Logger.log("Skipping Completion (not found).");
       }
     } catch (completionError) {
-      Logger.log("Error processing Completion sheet: " + completionError.message);
+      Logger.log("Completion sheet error: " + completionError.message);
     }
 
     if (sheetsFoundCount === 0) {
@@ -158,13 +178,12 @@ function copySpreadsheet(sheetID) {
 }
 
 
-
 function validateSpreadsheet(fileId, requiredSheets) {
   try {
     const spreadsheet = SpreadsheetApp.openById(fileId);
     const existingSheets = spreadsheet.getSheets().map(sheet => sheet.getName());
     
-    // Find which required sheets exist in the spreadsheet
+    //find which required sheets exist in the spreadsheet
     const existingRequiredSheets = requiredSheets.filter(sheet => existingSheets.includes(sheet));
     
     return {
@@ -177,8 +196,7 @@ function validateSpreadsheet(fileId, requiredSheets) {
   }
 }
 
-
-//Copy images from the source to target sheet
+//copy images from the source to target sheet
 function copyImages(sourceSheet, targetSheet) {
   const images = sourceSheet.getImages();
   images.forEach(function(image) {
