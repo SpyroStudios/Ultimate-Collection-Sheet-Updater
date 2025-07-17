@@ -25,22 +25,51 @@ function getDriveFiles() {
   return files;
 }
 
+function test() {
+      const sourceSpreadsheet = SpreadsheetApp.openById('1a_OP_FCfAOl9nccjKAYW5RNOR7r_4DST2mvup3G6BCo');
+      Logger.log("hm");
+    try {
+      const version = sourceSpreadsheet.getSheetByName("ImageRefs")?.getRange("E4").getValue();
+      Logger.log(version);
+      if (version === "1.1.4") {
+        extrasRemap = true;
+        Logger.log("This Works!");
+      }
+    } catch (e) {
+      Logger.log("Failed to read Prices!E4: " + e.message);
+    }
+}
+
+
 function copySpreadsheet(sheetID) {
+  const dev = false;
+  const latestVersion = "1.1.6";
+
   try {
-    const templateFileId = '17y7-4SXasf5KaddW7-pBrobtZZLfdNX9-F8rztFxMI4'; //v1.1.4
-    const sourceSpreadsheetId = sheetID;
+    const templateFileId = dev
+      ? '1chrK3Ax4A4v7QEw1GS0sQ7-KcqMaQDxDYQFh7Mog_ZY'
+      : '17y7-4SXasf5KaddW7-pBrobtZZLfdNX9-F8rztFxMI4';
 
+    const sourceSpreadsheet = !dev
+      ? SpreadsheetApp.openById(sheetID)
+      : SpreadsheetApp.openById('1a_OP_FCfAOl9nccjKAYW5RNOR7r_4DST2mvup3G6BCo');
     const file = DriveApp.getFileById(templateFileId);
-    const newFile = file.makeCopy("The Ultimate Skylanders Collectors Sheet v1.1.4 (Updated on " + new Date().toLocaleDateString() + ")");
-
-    const editors = newFile.getEditors();
-    const viewers = newFile.getViewers();
-
-    editors.forEach(user => newFile.removeEditor(user));
-    viewers.forEach(user => newFile.removeViewer(user));
-
+    const newFile = file.makeCopy(
+      "The Ultimate Skylanders Collectors Sheet v" + latestVersion +" (Updated on " + new Date().toLocaleDateString() + ")"
+    );
     const newSpreadsheet = SpreadsheetApp.openById(newFile.getId());
-    const sourceSpreadsheet = SpreadsheetApp.openById(sourceSpreadsheetId);
+
+    let version = latestVersion;
+    try {
+      version = sourceSpreadsheet.getSheetByName("ImageRefs")?.getRange("E4").getValue();
+      Logger.log("Processing v" + version + "... Updating to v" + latestVersion);
+    } catch (e) {
+      Logger.log("Failed to read Prices!E4: " + e.message);
+    }
+
+    // Remove editors and viewers
+    newFile.getEditors().forEach(user => newFile.removeEditor(user));
+    newFile.getViewers().forEach(user => newFile.removeViewer(user));
 
     const sheetConfig = {
       "Spyro's Adventure": [7, 8, 9],
@@ -96,12 +125,44 @@ function copySpreadsheet(sheetID) {
         numRows = Math.max(2, numRows - 2);
       }
 
+      // Handle special remap logic for Extras sheet
+      if (sheetName === "Extras" && version === "1.1.4") {
+        try {
+          // Build complete source row list
+          const mappings = [
+            ...Array.from({ length: 45 }, (_, i) => [i + 4, i + 4]),
+            ...Array.from({ length: 5 }, (_, i) => [49 + i, 50 + i]),
+            ...Array.from({ length: 15 }, (_, i) => [54 + i, 56 + i]),
+            ...Array.from({ length: 14 }, (_, i) => [69 + i, 74 + i])
+          ];
+
+          const dataToPaste = [];
+
+          mappings.forEach(([srcRow, destRow]) => {
+            const [d, e] = sourceSheet.getRange(srcRow, 4, 1, 2).getValues()[0];
+            dataToPaste.push({ row: destRow, values: [d === true, e === true] });
+          });
+
+          dataToPaste.forEach(({ row, values }) => {
+            targetSheet.getRange(row, 4, 1, 2).setValues([values]);
+          });
+
+          Logger.log("✅ Successfully remapped Extras sheet (v1.1.4)");
+        } catch (err) {
+          Logger.log("❌ Extras remap failed: " + err.message);
+        }
+
+        continue; // Prevent default processing afterward
+      }
+
+
       for (let i = 4; i <= numRows; i++) {
         try {
+          // Default processing for Extras (only runs if not remapped)
           if (sheetName === "Extras") {
-            let rowValues = sourceSheet.getRange(i, 4, 1, 2).getValues()[0];
-            rowValues = rowValues.map(val => typeof val === 'boolean' ? val : '');
-            targetSheet.getRange(i, 4, 1, rowValues.length).setValues([rowValues]);
+            const rowValues = sourceSheet.getRange(i, 4, 1, 2).getValues()[0];
+            const normalized = rowValues.map(val => typeof val === 'boolean' ? val : '');
+            targetSheet.getRange(i, 4, 1, 2).setValues([normalized]);
             continue;
           }
 
@@ -149,6 +210,7 @@ function copySpreadsheet(sheetID) {
       Logger.log(`Finished processing: ${sheetName}`);
     }
 
+    // Handle Completion sheet
     try {
       const sourceSheet = sourceSpreadsheet.getSheetByName("Completion");
       const targetSheet = newSpreadsheet.getSheetByName("Completion");
@@ -176,6 +238,8 @@ function copySpreadsheet(sheetID) {
     throw new Error("Failed to process the spreadsheet: " + error.message);
   }
 }
+
+
 
 
 function validateSpreadsheet(fileId, requiredSheets) {
