@@ -1,11 +1,158 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>OAuth Landing Page</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE_HERE" />
+  <title>Skylandeer's Ultimate Collectors Website</title>
+
+  <!-- AOS Animation CSS -->
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
+
+  <style>
+    :root {
+      --primary: #7c3aed;
+      --dark: #1b1b1f;
+      --light: #f9f9f9;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background-color: var(--light);
+      color: var(--dark);
+      line-height: 1.6;
+      opacity: 0;
+      transition: opacity 0.6s ease-in-out;
+    }
+
+    body.loaded {
+      opacity: 1;
+    }
+
+    header {
+      background-color: var(--primary);
+      padding: 2rem;
+      text-align: center;
+      color: white;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2.5rem;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      background-color: #ddd6fe;
+      padding: 1rem 0;
+    }
+
+    nav a {
+      margin: 0 1rem;
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+
+    nav a:hover {
+      background-color: #ede9fe;
+      color: #5b21b6;
+      border-radius: 4px;
+      padding: 0.25rem 0.5rem;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+    }
+
+    .card h2 {
+      margin-top: 0;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.9rem;
+      background-color: #f0f0f0;
+      color: #666;
+    }
+
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 2rem;
+      }
+
+      nav {
+        flex-direction: column;
+      }
+
+      nav a {
+        margin: 0.5rem 0;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h1>Welcome to Skylandeer and SpyroStudios' Ultimate Skylanders Collection Sheet Updater OAuth Landing Page!</h1>
-  <p>This site supports the Google OAuth consent verification.</p>
-  <p><a href="privacy.html">Privacy Policy</a></p>
+
+  <header data-aos="fade-down">
+    <h1>Skylandeer and SpyroStudios' Ultimate Collectors Website</h1>
+    <p>Secure Spreadsheet Updating using OAuth</p>
+  </header>
+
+  <nav data-aos="fade-in" data-aos-delay="200">
+    <a href="index.html">Home</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="#">Docs</a>
+  </nav>
+
+  <div class="container">
+    <div class="card" data-aos="fade-up">
+      <h2>What is this?</h2>
+      <p>This app allows secure access to your Google Drive and Sheets for streamlined workflows. All access is protected with Google's OAuth system.</p>
+    </div>
+
+    <div class="card" data-aos="fade-up" data-aos-delay="100">
+      <h2>Why OAuth?</h2>
+      <p>OAuth is a secure standard for user authentication and authorization, allowing apps to access your data without sharing your password.</p>
+    </div>
+
+    <div class="card" data-aos="fade-up" data-aos-delay="200">
+      <h2>How We Use Your Data</h2>
+      <p>We only access files you explicitly authorize. No files or data are stored or shared externally.</p>
+      <p><a href="privacy.html">Read the full privacy policy</a></p>
+    </div>
+  </div>
+
+  <footer data-aos="fade-up" data-aos-delay="300">
+    &copy; 2025 Skylandeer & SpyroStudios • Hosted with on GitHub Pages
+  </footer>
+
+  <!-- AOS Animation JS -->
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({ duration: 800, easing: 'ease-in-out', once: true });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.body.classList.add("loaded");
+    });
+  </script>
 </body>
 </html>
