@@ -6,7 +6,7 @@ The official web app for updating **The Ultimate Skylanders Collector's Sheet**.
 This tool provides a quick and reliable way to update your local copy of the Ultimate Skylanders Collection sheet, making it easier for fans and collectors to keep their data accurate and synchronized accross sheet updates.
 
 ## Launch the Updater  
-[Open the Ultimate Collection Sheet Updater](https://script.google.com/macros/s/AKfycbzpaFBDVztOiWs6tjxfoh46yzD7TwXweCARvCB_0t03bm8I7heasTrZYOfVCrY3J7M/exec)
+[Open the Ultimate Collection Sheet Updater](https://script.google.com/macros/s/AKfycbx5iDVwCAj2BgSTCgVqRuRdqrchUwhs2z3WZdSIG6xdV1zzBSOUYyUq_z9qBXkSw5I/exec)
 
 ## How It Works
 - Lists all accessible spreadsheets in your Google Drive
