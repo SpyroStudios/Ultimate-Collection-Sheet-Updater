@@ -43,16 +43,16 @@ function test() {
 
 function copySpreadsheet(sheetID) {
   const dev = false;
-  const latestVersion = "1.1.6";
+  const latestVersion = "1.1.8";
 
   try {
     const templateFileId = dev
-      ? '1chrK3Ax4A4v7QEw1GS0sQ7-KcqMaQDxDYQFh7Mog_ZY'
+      ? '17y7-4SXasf5KaddW7-pBrobtZZLfdNX9-F8rztFxMI4'
       : '17y7-4SXasf5KaddW7-pBrobtZZLfdNX9-F8rztFxMI4';
 
     const sourceSpreadsheet = !dev
       ? SpreadsheetApp.openById(sheetID)
-      : SpreadsheetApp.openById('1a_OP_FCfAOl9nccjKAYW5RNOR7r_4DST2mvup3G6BCo');
+      : SpreadsheetApp.openById('1fYWx7ldKh0AZapyULStO00CegtfJK8gqxR0iHocHFaA');
     const file = DriveApp.getFileById(templateFileId);
     const newFile = file.makeCopy(
       "The Ultimate Skylanders Collectors Sheet v" + latestVersion +" (Updated on " + new Date().toLocaleDateString() + ")"
@@ -126,33 +126,67 @@ function copySpreadsheet(sheetID) {
       }
 
       // Handle special remap logic for Extras sheet
-      if (sheetName === "Extras" && version === "1.1.4") {
-        try {
-          // Build complete source row list
-          const mappings = [
-            ...Array.from({ length: 45 }, (_, i) => [i + 4, i + 4]),
-            ...Array.from({ length: 5 }, (_, i) => [49 + i, 50 + i]),
-            ...Array.from({ length: 15 }, (_, i) => [54 + i, 56 + i]),
-            ...Array.from({ length: 14 }, (_, i) => [69 + i, 74 + i])
-          ];
+      if (sheetName === "Extras") {
+        if (version === "1.1.4") {
+          try {
+            // Build complete source row list
+            const mappings = [
+              ...Array.from({ length: 45 }, (_, i) => [i + 4, i + 4]),
+              ...Array.from({ length: 5 }, (_, i) => [49 + i, 50 + i]),
+              ...Array.from({ length: 15 }, (_, i) => [54 + i, 56 + i]),
+              ...Array.from({ length: 5 }, (_, i) => [69 + i, 74 + i]),
+              ...Array.from({ length: 1 }, (_, i) => [74 + i, 80 + i]),
+              ...Array.from({ length: 1 }, (_, i) => [75 + i, 82 + i]),
+              ...Array.from({ length: 2 }, (_, i) => [76 + i, 84 + i]),
+              ...Array.from({ length: 5 }, (_, i) => [78 + i, 87 + i])
+            ];
 
-          const dataToPaste = [];
+            const dataToPaste = [];
 
-          mappings.forEach(([srcRow, destRow]) => {
-            const [d, e] = sourceSheet.getRange(srcRow, 4, 1, 2).getValues()[0];
-            dataToPaste.push({ row: destRow, values: [d === true, e === true] });
-          });
+            mappings.forEach(([srcRow, destRow]) => {
+              const [d, e] = sourceSheet.getRange(srcRow, 4, 1, 2).getValues()[0];
+              dataToPaste.push({ row: destRow, values: [d === true, e === true] });
+            });
 
-          dataToPaste.forEach(({ row, values }) => {
-            targetSheet.getRange(row, 4, 1, 2).setValues([values]);
-          });
+            dataToPaste.forEach(({ row, values }) => {
+              targetSheet.getRange(row, 4, 1, 2).setValues([values]);
+            });
 
-          Logger.log("✅ Successfully remapped Extras sheet (v1.1.4)");
-        } catch (err) {
-          Logger.log("❌ Extras remap failed: " + err.message);
+            Logger.log("✅ Successfully remapped Extras sheet " + version);
+          } catch (err) {
+            Logger.log("❌ Extras remap failed: " + err.message);
+          }
+
+          continue; // Prevent default processing afterward
+        } else if (version === "1.1.5" || version === "1.1.6" || version === "1.1.7") {
+            try {
+              // Build complete source row list
+              const mappings = [
+                ...Array.from({ length: 75 }, (_, i) => [i + 4, i + 4]),
+                ...Array.from({ length: 1 }, (_, i) => [79 + i, 80 + i]),
+                ...Array.from({ length: 1 }, (_, i) => [80 + i, 82 + i]),
+                ...Array.from({ length: 2 }, (_, i) => [82 + i, 84 + i]),
+                ...Array.from({ length: 7 }, (_, i) => [83 + i, 87 + i])
+              ];
+
+              const dataToPaste = [];
+
+              mappings.forEach(([srcRow, destRow]) => {
+                const [d, e] = sourceSheet.getRange(srcRow, 4, 1, 2).getValues()[0];
+                dataToPaste.push({ row: destRow, values: [d === true, e === true] });
+              });
+
+              dataToPaste.forEach(({ row, values }) => {
+                targetSheet.getRange(row, 4, 1, 2).setValues([values]);
+              });
+
+              Logger.log("✅ Successfully remapped Extras sheet " + version);
+            } catch (err) {
+              Logger.log("❌ Extras remap failed: " + err.message);
+            }
+
+          continue; // Prevent default processing afterward
         }
-
-        continue; // Prevent default processing afterward
       }
 
 
